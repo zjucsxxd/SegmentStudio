@@ -1,26 +1,24 @@
 #include "capture.h"
 
 /* Window properties */
-#define WINDOW_TITLE "Segment Studio | Capture" 
-#define WINDOW_SIZE 400  /* SIZExSIZE */
+#define WINDOW_TITLE "Save capture"
+#define WINDOW_SIZE 80  /* SIZExSIZE */
 
 /* GL viewport context properties */
-#define GLC_TITLE "Viewer"
-#define GLC_WIDTH 640
-#define GLC_HEIGHT 480
-
-/* All side threads are bound to this */
-int is_running = FALSE;
+#define GL_TITLE "Say cheese!"
+#define GL_WIDTH 800
+#define GL_HEIGHT 600
 
 /* Window */
 GtkWidget * window;
-GtkWidget * vbox;
+GtkWidget * capture_button;
 
 /* Folder path */
 gchar * path;
 
-/* GL view */
-pthread_t glc_thread;
+/* GL thread */
+int gl_is_running = TRUE;
+pthread_t gl_thread;
 
 void cpInit()
 {
@@ -34,61 +32,112 @@ void cpInit()
         /* Get directory */
         cpDirSelect();
         
-        cpInitVbox();
-        cpInitGLWindow();
+        cpInitButton();
+        cpInitGl();
 
         gtk_widget_show_all(window);
 
         gtk_main();
 }
 
-static void cpInitGLWindow()
+
+static void cpDestroy()
 {
-        glfwInit();
+        /* Kill GL */
+        gl_is_running = FALSE;
+        pthread_join(gl_thread, NULL); 
+
+        gtk_widget_destroy(window);
+        gtk_main_quit();
+}
+
+static void cpInitButton()
+{
+        capture_button = gtk_button_new_with_label("Capture!");
+        gtk_container_add(GTK_CONTAINER(window), capture_button);
+
+        g_signal_connect(capture_button, "clicked", G_CALLBACK(cpCaptureButtonHandler), NULL);
+}
+
+static void cpCaptureButtonHandler(GtkWidget *widget, gpointer data)
+{
+        cpSave();
+}
+
+static void cpInitGl()
+{
+        pthread_create(&gl_thread, NULL, cpGlMain, NULL);
+}
+
+static void * cpGlMain(void *f)
+{
+        if (!glfwInit())
+                cpException("Could not start openGL");
 
         glfwOpenWindowHint(GLFW_WINDOW_NO_RESIZE, GL_TRUE);
 
-        glfwOpenWindow(GLC_WIDTH,
-                       GLC_HEIGHT,
+        if (!glfwOpenWindow(GL_WIDTH,
+                       GL_HEIGHT,
                        8, /* 24-bit RGB */
                        8,
                        8,
                        0,
                        0, /* Depth bits */
                        0, /* Stencil bits */
-                       GLFW_WINDOW);
+                       GLFW_WINDOW)) {
+                cpException("Could not open an openGL window");        
+        }
 
-        glfwSetWindowTitle(GLC_TITLE);
+        glfwSetWindowTitle(GL_TITLE);
         glfwPollEvents();
-}
 
-static void cpDestroy()
-{
-        /* Kill all threads */
-        is_running = FALSE;
+        cpGlSetup();
+        cpGlLoop();
 
-        pthread_join(glc_thread, NULL); 
+        /* Clean up kinect */
+        kntTerminate();
+
         glfwTerminate();
-
-        gtk_widget_destroy(window);
-        gtk_main_quit();
 }
 
-static void cpInitVbox()
+static void cpGlSetup()
 {
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(window), vbox);
+        /* Start kinect */
+        kntInit();
+        kntStart();
+
+        /* Flags */
+        glEnable(GL_TEXTURE_2D);
+        
+        /* Texture settings */
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        /* Perspective */
+        glMatrixMode(GL_PROJECTION);
+        gluPerspective(45.0f, 640.0f/480.0f, 0.0f, 100.0f);
+        glMatrixMode(GL_MODELVIEW);
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glTranslatef(0.0f, 0.0f, -3.0f);
 }
 
-static void cpInitCapture()
+static void cpGlLoop()
 {
-        pthread_create(&glc_thread, NULL, cpCaptureLoop, NULL);
-}
+        while (gl_is_running) {
+                glClear(GL_COLOR_BUFFER_BIT);
+        
+                /* Depth image */
+                glTexImage2D(GL_TEXTURE_2D, 0, 3, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, knt_depth_rgb);
+                glBegin(GL_QUADS);
+                        glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.33f, 1.0f);
+                        glTexCoord2f(1.0f, 0.0f); glVertex2f(1.33f, 1.0f);
+                        glTexCoord2f(1.0f, 1.0f); glVertex2f(1.33f, -1.0f);
+                        glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.33f, -1.0f);
+                glEnd();
 
-static void * cpCaptureLoop(void * f)
-{
-        while (is_running) {
-                
+                glfwSwapBuffers();
+                glfwSleep(.01);
         }
 }
 
@@ -113,6 +162,35 @@ static void cpDirSelect()
                 cpDestroy();
                 smInit();
         }
+}
+
+static void cpSave()
+{
+        /* Name files 0.dseg 1.dseg...etc */
+        static int count = -1;
+        ++count;
+
+        char file_path[4096];
+        sprintf(file_path, "%s/%d.dseg", path, count);
+
+        /* Remove the file:// from the front of the path */
+        memcpy(file_path, &file_path[strlen("file://")], 4096-strlen("file://"));
+
+        FILE * f = fopen(file_path, "w");
+
+        if (!f) {
+                perror("Couldn't write to directory.  Do you have write permissions?");
+                exit(EXIT_FAILURE);
+        }
+
+        /* Create header */
+        DsegHeader dh;
+        dh.num_pixels_classified = 0;
+        memcpy(dh.dbuf, knt_depth, sizeof(dh.dbuf));
+
+        fwrite(&dh, 1, sizeof(dh), f);
+
+        fclose(f);
 }
 
 static void cpException(char * err_msg)

@@ -20,6 +20,9 @@
 /*Front (Double) buffers for public access */
 uint16_t * knt_depth;
 
+/* RGB friendly gray buffer, 8 BIT replicated in RGB */
+char * knt_depth_rgb;
+
 /* Initialize the kinect */
 void kntInit();
 

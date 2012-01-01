@@ -35,6 +35,7 @@ void kntInit()
     /* Allocate buffers Depth=16bit rgba=24bit */
     knt_back_depth = malloc(640*480*2); /* Back buffer */
     knt_depth = malloc(640*480*2);      /* Front buffer */
+    knt_depth_rgb = malloc(640*480*3);
 
     /* Load into back buffers */
     freenect_set_depth_buffer(knt_dev, knt_back_depth);
@@ -67,6 +68,7 @@ void kntTerminate()
 {
     free(knt_back_depth);
     free(knt_depth);
+    free(knt_depth_rgb);
 
     freenect_shutdown(knt_ctx);
 }
@@ -81,4 +83,20 @@ void kntDepthHandler()
 {
     /* Swap buffer(s) front back to front */
     memcpy(knt_depth, knt_back_depth, 640*480*2);
+
+    uint16_t * d_ptr = knt_depth;
+    char * rgb_ptr = knt_depth_rgb;
+
+
+    /* Clone depth for RGB friendly display */
+    for (int i = 0; i < 640*480; ++i) {
+            unsigned char d = KNTRAW2CM(*d_ptr)/13.0f*256.0f;
+        *rgb_ptr = d;
+        ++rgb_ptr;
+        *rgb_ptr = d;
+        ++rgb_ptr;
+        *rgb_ptr = d;
+        ++d_ptr;
+        ++rgb_ptr;
+    }
 }

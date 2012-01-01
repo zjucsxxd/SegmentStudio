@@ -12,6 +12,6 @@
 
 int main(int argc, char * argv[])
 {
-        cpInit();
+        smInit();
         return 0;
 }

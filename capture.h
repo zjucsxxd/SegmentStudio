@@ -16,28 +16,44 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glfw.h>
+#include "kinect/kinect.h"
 #include "startup_mode.h"
+#include "dseg.h"
 
 /* Start capture utility */
 void cpInit();
 
-/* Load OpenGL context (GLFW) */
-static void cpInitGLWindow();
-
 /* Close application */
 static void cpDestroy();
 
-/* Add vbox container */
-static void cpInitVbox();
+/* Add capture button */
+static void cpInitButton();
 
-/* Add and start capture feed */
-static void cpInitCapture();
-
-/* Thread for capture GL window */
-static void * cpCaptureLoop(void * f);
+/* Handle capture button event */
+static void cpCaptureButtonHandler(GtkWidget *widget, gpointer data);
 
 /* Show folder dialog */
 static void cpDirSelect();
+
+/* Save the current image to a file */
+static void cpSave();
+
+/* 
+ * NOTE: GL must be initialized and setup on the same thread 
+ * Hence why there is a setup that is called as a thread
+*/
+
+/* Asynchronous call to GL setup */
+static void cpInitGl();
+
+/* Setup and cleanup opengl and capture */
+static void * cpGlMain(void *f);
+
+/* Handles capture and GL setup, called by main */
+static void cpGlSetup();
+
+/* Handles capture and GL rendering, called by main */
+static void cpGlLoop();
 
 /* Throw an exception */
 static void cpException(char * err_msg);
