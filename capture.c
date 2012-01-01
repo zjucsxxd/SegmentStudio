@@ -4,16 +4,23 @@
 #define WINDOW_TITLE "Segment Studio | Capture" 
 #define WINDOW_SIZE 400  /* SIZExSIZE */
 
+/* GL viewport context properties */
+#define GLC_TITLE "Viewer"
+#define GLC_WIDTH 640
+#define GLC_HEIGHT 480
+
+/* All side threads are bound to this */
+int is_running = FALSE;
+
 /* Window */
 GtkWidget * window;
 GtkWidget * vbox;
 
-/* Capture feed */
-GtkWidget * capture_image;
-GdkPixbuf * capture_pbuf;  /* Buffer to display image */
-
 /* Folder path */
 gchar * path;
+
+/* GL view */
+pthread_t glc_thread;
 
 void cpInit()
 {
@@ -28,15 +35,41 @@ void cpInit()
         cpDirSelect();
         
         cpInitVbox();
-        cpInitCapture();
+        cpInitGLWindow();
 
         gtk_widget_show_all(window);
 
         gtk_main();
 }
 
+static void cpInitGLWindow()
+{
+        glfwInit();
+
+        glfwOpenWindowHint(GLFW_WINDOW_NO_RESIZE, GL_TRUE);
+
+        glfwOpenWindow(GLC_WIDTH,
+                       GLC_HEIGHT,
+                       8, /* 24-bit RGB */
+                       8,
+                       8,
+                       0,
+                       0, /* Depth bits */
+                       0, /* Stencil bits */
+                       GLFW_WINDOW);
+
+        glfwSetWindowTitle(GLC_TITLE);
+        glfwPollEvents();
+}
+
 static void cpDestroy()
 {
+        /* Kill all threads */
+        is_running = FALSE;
+
+        pthread_join(glc_thread, NULL); 
+        glfwTerminate();
+
         gtk_widget_destroy(window);
         gtk_main_quit();
 }
@@ -49,8 +82,14 @@ static void cpInitVbox()
 
 static void cpInitCapture()
 {
-        capture_image = gtk_image_new_from_pixbuf(capture_pbuf);
-        gtk_container_add(GTK_CONTAINER(window), capture_image);
+        pthread_create(&glc_thread, NULL, cpCaptureLoop, NULL);
+}
+
+static void * cpCaptureLoop(void * f)
+{
+        while (is_running) {
+                
+        }
 }
 
 static void cpDirSelect()
@@ -74,4 +113,17 @@ static void cpDirSelect()
                 cpDestroy();
                 smInit();
         }
+}
+
+static void cpException(char * err_msg)
+{
+        GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(window),
+                                                     GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                     GTK_MESSAGE_ERROR,
+                                                     GTK_BUTTONS_CLOSE,
+                                                     err_msg);
+        
+        gtk_dialog_run(GTK_DIALOG(d));
+        cpDestroy();
+        exit(EXIT_FAILURE);
 }
