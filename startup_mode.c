@@ -54,7 +54,6 @@ static void smInitVbox()
         ptr = gtk_button_new_with_label(str);\
         gtk_container_add(GTK_CONTAINER(vbox), ptr);\
         g_signal_connect(ptr, "clicked", G_CALLBACK(smButtonCallback), NULL);\
-        gtk_widget_show(ptr)
 
 static void smInitButtons()
 {
