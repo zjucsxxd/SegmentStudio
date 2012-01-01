@@ -1,0 +1,17 @@
+/*
+ * Copyright 2011 Inteligenesis - All Rights Reserved
+ * 
+ * Authors:
+ *     Ellsworth Bud So Townsend [12/30/11]
+ * 
+ * Segment Studio - For capturing and saving depth segmentation 
+ * files from the Xbox Kinect
+*/
+
+#include "main_window.h"
+
+int main(int argc, char * argv[])
+{
+        smInit();
+        return 0;
+}
