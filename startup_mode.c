@@ -2,7 +2,7 @@
 
 /* Window properties */
 #define WINDOW_TITLE "Segment Studio" 
-#define WINDOW_SIZE 300  /* SIZExSIZE */
+#define WINDOW_SIZE 100  /* SIZExSIZE */
 
 /* Main window */
 GtkWidget *window;
@@ -22,20 +22,27 @@ void smInit()
 
         gtk_window_set_title(GTK_WINDOW(window), WINDOW_TITLE);
         gtk_container_set_border_width(GTK_CONTAINER(window), WINDOW_SIZE);
-
-        gtk_widget_show(window);
+        gtk_window_set_policy(GTK_WINDOW(window), FALSE, FALSE, FALSE);
 
         smInitVbox();
         smInitText();
         smInitButtons();
-        smLoop();
+
+        gtk_widget_show_all(window);
+
+        gtk_main();
 }
 
-void smInitVbox()
+static void smDestroy()
+{
+        gtk_widget_destroy(window);
+        gtk_main_quit();
+}
+
+static void smInitVbox()
 {
         vbox = gtk_vbox_new(TRUE, 0);
         gtk_container_add(GTK_CONTAINER(window), vbox);
-        gtk_widget_show(vbox);
 }
 
 /* 
@@ -46,10 +53,8 @@ void smInitVbox()
 #define ADD_BUTTON(ptr, str)\
         ptr = gtk_button_new_with_label(str);\
         gtk_container_add(GTK_CONTAINER(vbox), ptr);\
+        g_signal_connect(ptr, "clicked", G_CALLBACK(smButtonCallback), NULL);\
         gtk_widget_show(ptr)
-
-/* Where to place buttons on the grid */
-int grid_loc = 0;
 
 static void smInitButtons()
 {
@@ -61,10 +66,12 @@ static void smInitText()
 {
         select_text = gtk_label_new("Please select an option below");
         gtk_container_add(GTK_CONTAINER(vbox), select_text);
-        gtk_widget_show(select_text);
 }
 
-static void smLoop()
+static void smButtonCallback(GtkWidget *widget, gpointer data)
 {
-        gtk_main();
+        smDestroy();
+
+        if (widget == capture_button)
+                cpInit();
 }

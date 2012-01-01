@@ -8,7 +8,7 @@
  * files from the Xbox Kinect
 */
 
-#include "main_window.h"
+#include "startup_mode.h"
 
 int main(int argc, char * argv[])
 {

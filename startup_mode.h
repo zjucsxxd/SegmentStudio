@@ -12,13 +12,16 @@
 #define STARTUP_MODE_H_
 
 #include <gtk/gtk.h>
-#include "main_window.h"
+#include "capture.h"
 
 /* Start pop up dialog which will launch other parts of the program */
 void smInit();
 
+/* Destroy the window */
+static void smDestroy();
+
 /* Setup vertical box container */
-void smInitVbox();
+static void smInitVbox();
 
 /* Create buttons, called by init */
 static void smInitButtons();
@@ -26,7 +29,7 @@ static void smInitButtons();
 /* Information text */
 static void smInitText();
 
-/* Main loop */
-static void smLoop();
+/* Button callback handler */
+static void smButtonCallback(GtkWidget *widget, gpointer data);
 
 #endif
