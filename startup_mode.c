@@ -5,15 +5,15 @@
 #define WINDOW_SIZE 100  /* SIZExSIZE */
 
 /* Main window */
-GtkWidget *window;
-GtkWidget *vbox;
+static GtkWidget *window;
+static GtkWidget *vbox;
 
 /* Buttons */
-GtkWidget *capture_button;
-GtkWidget *view_button;
+static GtkWidget *capture_button;
+static GtkWidget *view_button;
 
 /* Text */
-GtkWidget *select_text;
+static GtkWidget *select_text;
 
 void smInit()
 {
@@ -57,8 +57,8 @@ static void smInitVbox()
 
 static void smInitButtons()
 {
-        ADD_BUTTON(view_button, "Open a segment file");
         ADD_BUTTON(capture_button, "Capture");
+        ADD_BUTTON(view_button, "View/Edit a segment file");
 }
 
 static void smInitText()
@@ -73,4 +73,6 @@ static void smButtonCallback(GtkWidget *widget, gpointer data)
 
         if (widget == capture_button)
                 cpInit();
+        else if (widget == view_button)
+                viInit();
 }

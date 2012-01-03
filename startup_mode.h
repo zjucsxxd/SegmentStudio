@@ -13,6 +13,7 @@
 
 #include <gtk/gtk.h>
 #include "capture.h"
+#include "viewer.h"
 
 /* Start pop up dialog which will launch other parts of the program */
 void smInit();

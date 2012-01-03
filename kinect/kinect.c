@@ -79,6 +79,11 @@ void * kntHandleDataThread(void * f)
         freenect_process_events(knt_ctx);
 }
 
+inline unsigned char kntCvtNormalizedByte(uint16_t in)
+{
+        return KNTRAW2CM(in)/4.0f*256.0f;
+}
+
 void kntDepthHandler()
 {
     /* Swap buffer(s) front back to front */
@@ -87,10 +92,9 @@ void kntDepthHandler()
     uint16_t * d_ptr = knt_depth;
     char * rgb_ptr = knt_depth_rgb;
 
-
     /* Clone depth for RGB friendly display */
     for (int i = 0; i < 640*480; ++i) {
-            unsigned char d = KNTRAW2CM(*d_ptr)/13.0f*256.0f;
+        unsigned char d = kntCvtNormalizedByte(*d_ptr);
         *rgb_ptr = d;
         ++rgb_ptr;
         *rgb_ptr = d;

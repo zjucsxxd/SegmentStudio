@@ -15,7 +15,7 @@
  *MIN: .3003
  *Max: 5.34 (NOTE: CUT VALUES AFTER 1024, NOT VERY GOOD AFTER)
 */
-#define KNTRAW2CM(x) 1.0f/(x * -0.0030711016 + 3.330945161)
+#define KNTRAW2CM(x) (-1.0f/(x * -0.0030711016 + 3.330945161))
 
 /*Front (Double) buffers for public access */
 uint16_t * knt_depth;
@@ -37,6 +37,9 @@ void kntTerminate();
 
 /* Thread which handles kinect stream data */
 void * kntHandleDataThread(void * f);
+
+/* Helper, convert 16-bit unormalized to 8-bit normalized */
+unsigned char kntCvtNormalizedByte(uint16_t in);
 
 /* Handle depth */
 void kntDepthHandler();

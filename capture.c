@@ -10,15 +10,15 @@
 #define GL_HEIGHT 600
 
 /* Window */
-GtkWidget * window;
-GtkWidget * capture_button;
+static GtkWidget * window;
+static GtkWidget * capture_button;
 
 /* Folder path */
-gchar * path;
+static gchar * path;
 
 /* GL thread */
-int gl_is_running = TRUE;
-pthread_t gl_thread;
+static int gl_is_running = TRUE;
+static pthread_t gl_thread;
 
 void cpInit()
 {
@@ -39,7 +39,6 @@ void cpInit()
 
         gtk_main();
 }
-
 
 static void cpDestroy()
 {
@@ -91,6 +90,10 @@ static void * cpGlMain(void *f)
         glfwSetWindowTitle(GL_TITLE);
         glfwPollEvents();
 
+        /* Start kinect */
+        kntInit();
+        kntStart();
+
         cpGlSetup();
         cpGlLoop();
 
@@ -102,10 +105,7 @@ static void * cpGlMain(void *f)
 
 static void cpGlSetup()
 {
-        /* Start kinect */
-        kntInit();
-        kntStart();
-
+        
         /* Flags */
         glEnable(GL_TEXTURE_2D);
         
@@ -127,7 +127,7 @@ static void cpGlLoop()
         while (gl_is_running) {
                 glClear(GL_COLOR_BUFFER_BIT);
         
-                /* Depth image */
+                /* Texture image */
                 glTexImage2D(GL_TEXTURE_2D, 0, 3, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, knt_depth_rgb);
                 glBegin(GL_QUADS);
                         glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.33f, 1.0f);
@@ -152,7 +152,6 @@ static void cpDirSelect()
                         NULL);
 
         int res = gtk_dialog_run(GTK_DIALOG(folder_dialog));
-
 
         if (res == GTK_RESPONSE_ACCEPT) {
                 path = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(folder_dialog));

@@ -10,6 +10,11 @@
 #ifndef DSEG_H_
 #define DSEG_H_
 
+#include <stdint.h>
+
+/* Maximum number of classification types */
+#define DSEG_MAX_TYPES 5
+
 /* Header for a dseg file */
 typedef struct
 {
@@ -24,10 +29,10 @@ typedef struct
 typedef struct
 {
         /* Location in the depth buffer this pixel points to */
-        char x, y;
+        int x, y;
         
         /* Label that applies to this pixel */
-        char label; 
+        int label; 
 } DsegPixel;
 
 #endif
